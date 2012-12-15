@@ -1,0 +1,9 @@
+{% extends "main.html" %}
+
+{% block container %}
+    {% block container_header %}{% endblock %}
+    {% for widget in widgets %}
+        {{ widget | safe }}
+    {% endfor %}
+    {% block container_footer %}{% endblock %}
+{% endblock %}

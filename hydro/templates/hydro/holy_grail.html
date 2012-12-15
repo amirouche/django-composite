@@ -1,0 +1,17 @@
+{% extends "main.html" %}
+
+{% block container %}
+    {% block container_header %}{% endblock %}
+    <div class="row">
+        {% for widget in first_column_widgets %}
+            {{ widget|safe }}
+        {% endfor %}
+        {% for widget in second_column_widgets %}
+            {{ widget|safe }}
+        {% endfor %}
+        {% for widget in third_column_widgets %}
+            {{ widget|safe }}
+        {% endfor %}
+    </div>
+    {% block container_footer %}{% endblock %}
+{% endblock %}

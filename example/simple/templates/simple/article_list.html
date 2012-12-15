@@ -1,0 +1,16 @@
+<div class="accordion article_list" id="{{ widget_id }}">
+    {% for object in objects %}
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="{{ widget_id }}" href="#article{{ object.id }}">
+                    {{ object.title }}
+                </a>
+            </div>
+            <div id="article{{ object.id }}" class="accordion-body collapse {% if forloop.first %}in{% endif %}">
+                <div class="accordion-inner">
+                    {{ object.content }}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

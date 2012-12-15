@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock %} </title>
+    {% for css_file in css_files %}
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{{ css_file }}" />
+    {% endfor %}
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body class="{% if body_class %}{{ body_class }}{% endif %} {% block body_class %}{% endblock %}">
+      {% block body %}
+          {% block header %}{% endblock %}
+          <div class="container">
+              {% block container %}{% endblock %}
+          </div>
+          {% block footer %}{% endblock %}
+      {% endblock body %}
+      {% for javascript_file in javascript_files %}
+          <script type="text/javascript" src="{{ STATIC_URL}}{{ javascript_file }}"></script>
+      {% endfor %}
+  </body>
+</html>
