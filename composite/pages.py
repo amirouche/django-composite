@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from composite.utils import OrderedSet
 
 
-class MetaPage(type): 
+class MetaPage(type):
 
     def __new__(cls, name, bases, dct):
         cls = type.__new__(cls, name, bases, dct)
