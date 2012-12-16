@@ -1,5 +1,5 @@
-from hydro.widget import Widget
-from hydro.pages import OneColumn
+from composite.widget import Widget
+from composite.pages import OneColumn
 
 from simple.models import Article
 
