@@ -4,6 +4,36 @@ from django.views.generic import TemplateView
 from composite.utils import OrderedSet
 
 
+class MetaPage(type): 
+
+    def __new__(cls, name, bases, dct):
+        cls = type.__new__(cls, name, bases, dct)
+        # Cache static files
+        # Add parent static files
+        base = bases[0]
+        try:
+            css_files = base.static_files_cache['css_files']
+            javascript_files = base.static_files_cache['javascript_files']
+        except:
+            # this is not a Page class instance
+            css_files = OrderedSet()
+            javascript_files = OrderedSet()
+
+        # add current class static files
+        map(css_files.add, cls.css_files)
+        map(javascript_files.add, cls.javascript_files)
+
+        for widget in cls.get_widgets():
+            widget_statics = widget.get_static_files()
+            map(javascript_files.add, widget_statics['javascript_files'])
+            map(css_files.add, widget_statics['css_files'])
+        cls.static_files_cache = {
+            'css_files': css_files,
+            'javascript_files': javascript_files,
+        }
+        return cls
+
+
 class Page(TemplateView):
     """Base class for all page class
 
@@ -15,38 +45,18 @@ class Page(TemplateView):
     Mind the fact that this class is not fully efficient if you
     generate it for each requests. RTFC.
     """
-    javascript_files = []
-    css_files = []
+
+    __metaclass__ = MetaPage
+
+    javascript_files = list()
+    css_files = list()
     body_class = None
 
     def __init__(self, body_class=None):
         self.body_class = body_class if body_class else self.body_class
 
-        # Cache static files
-        # XXX: This is not the most efficient way to do this
-        # it populates class properties in an instance method
-        # so it's done for every class instantiation
-        # which must only be done when is hooked in the url router
-        # XXX: if in the future they are usecases for page
-        # classes instantiated for every requests, one can move
-        # this code in a metaclass and rework ``get_widgets``
-        # so that it can be called from the metaclass.
-        if not hasattr(self, 'static_files_cache'):
-            css_files = OrderedSet()
-            javascript_files = OrderedSet()
-        else:
-            css_files = OrderedSet(self.static_files_cache['css_files'])
-            javascript_files = OrderedSet(self.static_files_cache['javascript_files'])
-        for widget in self.get_widgets():
-            widget_statics = widget.get_static_files()
-            map(javascript_files.add, widget_statics['javascript_files'])
-            map(css_files.add, widget_statics['css_files'])
-        self.static_files_cache = {
-            'css_files': css_files,
-            'javascript_files': javascript_files,
-        }
-
-    def get_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
         """It must be an iterable over the widgets
         of the page.
 
@@ -56,7 +66,7 @@ class Page(TemplateView):
         page can possibly render.
 
         You must override this method in a subclass."""
-        raise NotImplementedError()
+        return []
 
     def get_context_data(self, request, *args, **kwargs):
         ctx = dict(self.static_files_cache)
@@ -103,7 +113,7 @@ class Page(TemplateView):
                     return response
             # oups! there were no such method or it wasn't the right
             # form, iterate over widgets to find a possible match
-            for widget in self.get_widgets(request, *args, **kwargs):
+            for widget in self.get_widgets(self, request, *args, **kwargs):
                 handler = getattr(widget, method, None)
                 if handler:
                     response = handler(self, request, *args, **kwargs)
@@ -140,16 +150,8 @@ class BootstrapPage(Page):
     override ``__init__`` method and don't break the Internet.
     """
 
-    def __init__(self, body_class=None):
-        self.static_files_cache = {
-            'css_files': OrderedSet(),
-            'javascript_files': OrderedSet(),
-        }
-        self.static_files_cache['css_files'].add('css/bootstrap.css')
-        self.static_files_cache['css_files'].add('css/bootstrap-responsive.css')
-        self.static_files_cache['javascript_files'].add('js/jquery.js')
-        self.static_files_cache['javascript_files'].add('js/bootstrap.js')
-        super(BootstrapPage, self).__init__(body_class)
+    css_files = ['css/bootstrap.css', 'css/bootstrap-responsive.css']
+    javascript_files = ['js/jquery.js', 'js/bootstrap.js']
 
 
 class OneColumn(BootstrapPage):
@@ -163,10 +165,11 @@ class OneColumn(BootstrapPage):
     for extra speed.
     """
 
-    widgets = []
+    widgets = list()
     template_name = 'composite/one_column.html'
 
-    def get_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the column.
 
@@ -174,12 +177,12 @@ class OneColumn(BootstrapPage):
         so it should always return something see ``Page.get_widgets()``.
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.widgets
+        return cls.widgets
 
     def get_context_data(self, request, *args, **kwargs):
         ctx = super(OneColumn, self).get_context_data(request, *args, **kwargs)
         widgets = list()
-        for widget in self.get_widgets():
+        for widget in self.get_widgets(self, request, *args, **kwargs):
             widget = widget.render(self, request, *args, **kwargs)
             widgets.append(widget)
         ctx['widgets'] = widgets
@@ -193,7 +196,7 @@ class OneColumn(BootstrapPage):
         # Compute context of the page
         ctx = super(OneColumn, self).get_context_data(request, *args, **kwargs)
         widgets = list()
-        for widget in self.get_widgets():
+        for widget in self.get_widgets(self, *args, **kwargs):
             if widget == submitted_widget:
                 widget = partial_response
             else:
@@ -222,26 +225,29 @@ class TwoColumns(BootstrapPage):
     second_column_widgets = []
     template_name = 'composite/two_columns.html'
 
-    def get_first_columns_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_first_column_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the first column.
 
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.first_column_widgets
+        return cls.first_column_widgets
 
-    def get_second_columns_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_second_column_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the second column.
 
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.second_column_widgets
+        return cls.second_column_widgets
 
-    def get_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
         for column in ('first', 'second'):
             widgets_method_name = 'get_%s_column_widgets' % column
-            for widget in getattr(self, widgets_method_name)(request):
+            for widget in getattr(cls, widgets_method_name)(self, request, *args, **kwargs):
                 yield widget
 
     def get_context_data(self, request, *args, **kwargs):
@@ -249,7 +255,7 @@ class TwoColumns(BootstrapPage):
         for column in ('first', 'second'):
             widgets = list()
             widgets_method_name = 'get_%s_column_widgets' % column
-            for widget in getattr(self, widgets_method_name)():
+            for widget in getattr(cls, widgets_method_name)(self, request, *args, **kwargs):
                 widget = widget.render(self, request, *args, **kwargs)
                 widgets.append(widget)
             ctx['%s_column_widgets' % column] = widgets
@@ -294,34 +300,38 @@ class HolyGrail(BootstrapPage):
     third_column_widgets = []
     template_name = 'composite/holy_grail.html'
 
-    def get_first_column_widgets(self, request, *args, **kwargs):
+    @classmethod
+    def get_first_column_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the first column.
 
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.first_column_widgets
+        return cls.first_column_widgets
 
-    def get_second_column_widgets(self, request, *args, **kwargs):
+    @classmethod
+    def get_second_column_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the second column.
 
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.second_column_widgets
+        return cls.second_column_widgets
 
-    def get_third_column_widgets(self, request, *args, **kwargs):
+    @classmethod
+    def get_third_column_widgets(cls, self=None, request=None, *args, **kwargs):
         """Override this to customize the widget set used
         to render the third column.
 
         Since it's called for every requests, you might want
         to cache the results for extra speed."""
-        return self.third_column_widgets
+        return cls.third_column_widgets
 
-    def get_widgets(self, request=None, *args, **kwargs):
+    @classmethod
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
         for column in ('first', 'second', 'third'):
             widgets_method_name = 'get_%s_column_widgets' % column
-            for widget in getattr(self, widgets_method_name)(request):
+            for widget in getattr(cls, widgets_method_name)(self, request, *args, **kwargs):
                 yield widget
 
     def get_context_data(self, request, *args, **kwargs):
