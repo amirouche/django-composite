@@ -24,6 +24,7 @@ class MetaPage(type):
         map(javascript_files.add, cls.javascript_files)
 
         for widget in cls.get_widgets():
+            widget.parent = cls
             widget_statics = widget.get_static_files()
             map(javascript_files.add, widget_statics['javascript_files'])
             map(css_files.add, widget_statics['css_files'])
