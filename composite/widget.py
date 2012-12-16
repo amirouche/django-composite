@@ -5,6 +5,32 @@ from django.core.exceptions import ImproperlyConfigured
 from composite.utils import OrderedSet
 
 
+class MetaWidget(type):
+
+    def __new__(cls, name, bases, dct):
+        cls = type.__new__(cls, name, bases, dct)
+        # Cache static files
+        # Add parent static files
+        base = bases[0]
+        try:
+            css_files = base.static_files_cache['css_files']
+            javascript_files = base.static_files_cache['javascript_files']
+        except:
+            # it is not a Widget class instance
+            css_files = OrderedSet()
+            javascript_files = OrderedSet()
+
+        widget_statics = cls.get_static_files()
+        map(javascript_files.add, widget_statics['javascript_files'])
+        map(css_files.add, widget_statics['css_files'])
+
+        cls.static_files_cache = {
+            'css_files': css_files,
+            'javascript_files': javascript_files,
+        }
+        return cls
+
+
 class Widget(object):
     """Base class for all widgets. You must at least define
     ``template_name`` class property.
@@ -15,6 +41,8 @@ class Widget(object):
     The default context inject all widgets as a ``widgets`` variable in
     the template, for more complex usecases override ``get_context_data()``."""
 
+    __metaclass__ = MetaWidget
+
     javascript_files = []
     css_files = []
 
@@ -24,23 +52,12 @@ class Widget(object):
     def __init__(self, widget_id=None, template_name=None):
         self.widget_id = widget_id
         self.template_name = template_name if template_name else self.template_name
-        # Cache static files
-        # XXX: This is almost the same commend, it's the same problem
-        # XXX: This will be run for each widget instantiation
-        # which means each time it's added to a page class
-        # this is not needed since we know all possible static
-        # files this widget can use when the class is created
-        # that's why it should be done in a meta class
-        # XXX: No, I don't think it's good idea to have different
-        # css/javascript files depending on the request for
-        # the same page. If you really want to do this, do it
-        # in the template!
-        self.static_files_cache = self.get_static_files()
 
-    def get_static_files(self):
-        css_files = OrderedSet(self.css_files)
-        javascript_files = OrderedSet(self.javascript_files)
-        for widget in self.widgets:
+    @classmethod
+    def get_static_files(cls):
+        css_files = OrderedSet(cls.css_files)
+        javascript_files = OrderedSet(cls.javascript_files)
+        for widget in cls.widgets:
             # we need to keep this always in the same order
             # or the designer will be mad
             map(css_files.add, widget.css_files)
