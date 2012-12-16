@@ -9,15 +9,6 @@ class ValidableForm(forms.Form):
     form_name = forms.CharField(widget=forms.HiddenInput(), initial='ValidableForm', required=True)
 
 
-class AnotherValidableForm(forms.Form):
-    form_name = forms.CharField(widget=forms.HiddenInput(), initial='AnotherValidableForm', required=True)
-
-
-class ImpossibleFormMission(forms.Form):
-    form_name = forms.CharField(widget=forms.HiddenInput(), initial='MissionImpossibleForm', required=True)
-    hidden = forms.BooleanField(widget=forms.HiddenInput(), required=True)
-
-
 class ValidableFormWidget(Widget):
 
     template_name = 'forms/forms.html'
@@ -34,6 +25,7 @@ class ValidableFormWidget(Widget):
             if form.cleaned_data['form_name'] == 'ValidableForm':
                 return redirect('index')
         # else the submitted form wasn't this one
+
 
 class AnotherValidableFormWidget(Widget):
 
@@ -52,6 +44,15 @@ class AnotherValidableFormWidget(Widget):
             if form.cleaned_data['form_name'] == 'AnotherValidableForm':
                 return redirect('index')
         # else the submitted form wasn't this one
+
+
+class AnotherValidableForm(forms.Form):
+    form_name = forms.CharField(widget=forms.HiddenInput(), initial='AnotherValidableForm', required=True)
+
+
+class ImpossibleFormMission(forms.Form):
+    form_name = forms.CharField(widget=forms.HiddenInput(), initial='MissionImpossibleForm', required=True)
+    hidden = forms.BooleanField(widget=forms.HiddenInput(), required=True)
 
 
 class ImpossibleFormMissionWidget(Widget):
