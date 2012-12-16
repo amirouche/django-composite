@@ -28,6 +28,10 @@ class MetaWidget(type):
             'css_files': css_files,
             'javascript_files': javascript_files,
         }
+
+        # hook parent widget to direct children widgets
+        for widget in cls.get_widgets():
+            widget.parent = cls
         return cls
 
 
@@ -70,14 +74,15 @@ class Widget(object):
             'javascript_files': javascript_files,
         }
 
-    def get_widgets(self, page, request, *args, **kwargs):
+    @classmethod
+    def get_widgets(cls, self=None, page=None, request=None, *args, **kwargs):
         """You might want to override this to allow
         for a fine grained list of widget depending on the page
         and the request.
 
         Mind the fact that this is called for every request, thus
         you might want to cache the results for extra speed."""
-        return self.widgets
+        return cls.widgets
 
     def get_context_data(self, request, *args, **kwargs):
         return dict(widget_id=self.widget_id)
@@ -101,7 +106,7 @@ class Widget(object):
     def render_widget_with_context(self, page, request, ctx, *args, **kwargs):
         ctx = RequestContext(request, ctx)
         widgets = list()
-        for widget in self.get_widgets(page, request, *args, **kwargs):
+        for widget in self.get_widgets(self, page, request, *args, **kwargs):
             widget = widget.render(page, request, *args, **kwargs)
             widgets.append(widget)
         ctx['widgets'] = widgets
