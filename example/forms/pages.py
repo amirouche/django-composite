@@ -30,7 +30,6 @@ class ValidableFormWidget(Widget):
 
 class AnotherValidableFormWidget(Widget):
 
-
     template_name = 'forms/forms.html'
     css_files = ['css/forms.css']
 
