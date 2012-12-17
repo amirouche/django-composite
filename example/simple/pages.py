@@ -1,5 +1,5 @@
-from composite.widget import Widget
-from composite.pages import OneColumn
+from composite import Widget
+from composite.pages.bootstrap import OneColumn
 
 from simple.models import Article
 

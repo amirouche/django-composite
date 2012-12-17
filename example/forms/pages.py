@@ -1,8 +1,9 @@
 from django.shortcuts import redirect
 from django import forms
 
-from composite.pages import HolyGrail
-from composite.widget import Widget
+from composite import Widget
+from composite.pages.bootstrap import HolyGrail
+
 
 
 class ValidableForm(forms.Form):
