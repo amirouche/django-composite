@@ -65,7 +65,6 @@ class Page(TemplateView):
 
     __metaclass__ = MetaPage
 
-
     is_staff = False
     is_superuser = False
     permissions = []
