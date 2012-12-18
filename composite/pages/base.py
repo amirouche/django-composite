@@ -13,8 +13,8 @@ class MetaPage(type):
         # Add parents static files
         for base in bases:
             try:
-                css_files = list(base.static_files_cache['css_files'])
-                javascript_files = list(base.static_files_cache['javascript_files'])
+                css_files = OrderedSet(base.static_files_cache['css_files'])
+                javascript_files = OrderedSet(base.static_files_cache['javascript_files'])
                 permissions = list(base.permissions)
             except:
                 # this is not a Page class instance
