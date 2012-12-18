@@ -10,17 +10,17 @@ class MetaPage(type):
     def __new__(cls, name, bases, dct):
         cls = type.__new__(cls, name, bases, dct)
         # Cache static files and permissions
-        # Add parent static files
-        base = bases[0]
-        try:
-            css_files = base.static_files_cache['css_files']
-            javascript_files = base.static_files_cache['javascript_files']
-            permissions = list(base.permissions)
-        except:
-            # this is not a Page class instance
-            css_files = OrderedSet()
-            javascript_files = OrderedSet()
-            permissions = list()
+        # Add parents static files
+        for base in bases:
+            try:
+                css_files = list(base.static_files_cache['css_files'])
+                javascript_files = list(base.static_files_cache['javascript_files'])
+                permissions = list(base.permissions)
+            except:
+                # this is not a Page class instance
+                css_files = OrderedSet()
+                javascript_files = OrderedSet()
+                permissions = list()
 
         # add current class static files and permissions
         map(css_files.add, cls.css_files)
