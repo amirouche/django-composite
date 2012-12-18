@@ -66,6 +66,12 @@ class Widget(object):
         self.widget_id = widget_id
         self.template_name = template_name if template_name else self.template_name
 
+    def page(self):
+        widget = self
+        while hasattr(self, 'parent'):
+            widget = widget.parent
+        return widget
+
     @classmethod
     def get_permissions(cls):
         """Used internally to compute permissions.
