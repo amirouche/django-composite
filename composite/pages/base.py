@@ -23,9 +23,18 @@ class MetaPage(type):
                 permissions = list()
 
         # add current class static files and permissions
-        map(css_files.add, cls.css_files)
-        map(javascript_files.add, cls.javascript_files)
-        permissions.extend(cls.permissions)
+        try:
+            map(css_files.add, dct['css_files'])
+        except KeyError:
+            pass
+        try:
+            map(javascript_files.add, dct['javascript_files'])
+        except KeyError:
+            pass
+        try:
+            permissions.extend(dct['permissions'])
+        except KeyError:
+            pass
 
         for widget in cls.get_widgets():
             widget.parent = cls
