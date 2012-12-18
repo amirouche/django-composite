@@ -104,7 +104,7 @@ class Widget(object):
         you might want to cache the results for extra speed."""
         return cls.widgets
 
-    def get_context_data(self, request, *args, **kwargs):
+    def get_context_data(self, page, request, *args, **kwargs):
         return dict(widget_id=self.widget_id)
 
     def get_template_names(self):
@@ -120,7 +120,7 @@ class Widget(object):
             return [self.template_name]
 
     def render(self, page, request, *args, **kwargs):
-        ctx = self.get_context_data(request, *args, **kwargs)
+        ctx = self.get_context_data(page, request, *args, **kwargs)
         return self.render_widget_with_context(page, request, ctx, *args, **kwargs)
 
     def render_widget_with_context(self, page, request, ctx, *args, **kwargs):
