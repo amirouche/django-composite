@@ -15,10 +15,12 @@ class MetaWidget(type):
         try:
             css_files = base.static_files_cache['css_files']
             javascript_files = base.static_files_cache['javascript_files']
+            permissions = list(base.permissions)
         except:
             # it is not a Widget class instance
             css_files = OrderedSet()
             javascript_files = OrderedSet()
+            permissions = list()
 
         widget_statics = cls.get_static_files()
         map(javascript_files.add, widget_statics['javascript_files'])
@@ -28,6 +30,9 @@ class MetaWidget(type):
             'css_files': css_files,
             'javascript_files': javascript_files,
         }
+
+        permissions.extend(cls.get_permissions())
+        self.permissions = permissions
 
         # hook parent widget to direct children widgets
         for widget in cls.get_widgets():
@@ -47,6 +52,10 @@ class Widget(object):
 
     __metaclass__ = MetaWidget
 
+    is_staff = False
+    is_superuser = False
+    permissions = []
+
     javascript_files = []
     css_files = []
 
@@ -56,6 +65,17 @@ class Widget(object):
     def __init__(self, widget_id=None, template_name=None):
         self.widget_id = widget_id
         self.template_name = template_name if template_name else self.template_name
+
+    @classmethod
+    def get_permissions(cls):
+        """Used internally to compute permissions.
+
+        To know the permissions associated with this widget,
+        use ``permissions`` property on the widget"""
+        permissions = cls.permissions
+        for widget in cls.widgets:
+            permissions.extends(widget.get_permissions())
+        return permissions
 
     @classmethod
     def get_static_files(cls):

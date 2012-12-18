@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden
 from django.views.generic import TemplateView
 
 from composite.utils import OrderedSet
@@ -8,30 +9,36 @@ class MetaPage(type):
 
     def __new__(cls, name, bases, dct):
         cls = type.__new__(cls, name, bases, dct)
-        # Cache static files
+        # Cache static files and permissions
         # Add parent static files
         base = bases[0]
         try:
             css_files = base.static_files_cache['css_files']
             javascript_files = base.static_files_cache['javascript_files']
+            permissions = list(base.permissions)
         except:
             # this is not a Page class instance
             css_files = OrderedSet()
             javascript_files = OrderedSet()
+            permissions = list()
 
-        # add current class static files
+        # add current class static files and permissions
         map(css_files.add, cls.css_files)
         map(javascript_files.add, cls.javascript_files)
+        permissions.extend(cls.permissions)
 
         for widget in cls.get_widgets():
             widget.parent = cls
             widget_statics = widget.get_static_files()
             map(javascript_files.add, widget_statics['javascript_files'])
             map(css_files.add, widget_statics['css_files'])
+            permissions.extend(widget.get_permissions())
+
         cls.static_files_cache = {
             'css_files': css_files,
             'javascript_files': javascript_files,
         }
+        cls.permissions = permissions
         return cls
 
 
@@ -48,6 +55,11 @@ class Page(TemplateView):
     """
 
     __metaclass__ = MetaPage
+
+
+    is_staff = False
+    is_superuser = False
+    permissions = []
 
     javascript_files = list()
     css_files = list()
@@ -75,10 +87,20 @@ class Page(TemplateView):
         return ctx
 
     def dispatch(self, request, *args, **kwargs):
+        # superuser check
+        if self.is_superuser and not request.user.is_superuser:
+            return HttpResponseForbidden()
+        # is_staff check
+        if self.is_staff and not request.user.is_staff:
+            return HttpResponseForbidden()
+        # permissions checks
+        for permission in self.permissions:
+            if not request.user.has_perm(permission):
+                return HttpResponseForbidden()
+
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        # Same purpose method as ``django.views.base.View.dispatch``
         # but we defer to error handler only if the ``request.method``
         # method is defined nowhere in the page or its widgets
         # otherwise it's a a programming error and not a
