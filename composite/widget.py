@@ -11,16 +11,16 @@ class MetaWidget(type):
         cls = type.__new__(cls, name, bases, dct)
         # Cache static files
         # Add parent static files
-        base = bases[0]
-        try:
-            css_files = base.static_files_cache['css_files']
-            javascript_files = base.static_files_cache['javascript_files']
-            permissions = list(base.permissions)
-        except:
-            # it is not a Widget class instance
-            css_files = OrderedSet()
-            javascript_files = OrderedSet()
-            permissions = list()
+        for base in bases:
+            try:
+                css_files = list(base.static_files_cache['css_files'])
+                javascript_files = list(base.static_files_cache['javascript_files'])
+                permissions = list(base.permissions)
+            except:
+                # it is not a Widget class instance
+                css_files = OrderedSet()
+                javascript_files = OrderedSet()
+                permissions = list()
 
         widget_statics = cls.get_static_files()
         map(javascript_files.add, widget_statics['javascript_files'])
@@ -32,7 +32,7 @@ class MetaWidget(type):
         }
 
         permissions.extend(cls.get_permissions())
-        self.permissions = permissions
+        cls.permissions = permissions
 
         # hook parent widget to direct children widgets
         for widget in cls.get_widgets():
