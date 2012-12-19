@@ -105,5 +105,5 @@ How to contribute
 Links
 -----
 
-- `forge <https://github.com/django-composite/django-composite>`_issue
+- `forge <https://github.com/django-composite/django-composite>`_
 - `documentation <https://django-composite.readthedocs.org/en/latest/>`_
