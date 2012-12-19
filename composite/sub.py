@@ -4,10 +4,10 @@ from django.conf.urls import patterns, url, include
 class Sub(object):
 
     application_namespace = None
-    instance_namespace = None
 
-    def __init__(self):
+    def __init__(self, instance_namespace=None):
         self.resources = []
+        self.instance_namespace = instance_namespace
 
     def register(self, resource):
         resource.sub = self
