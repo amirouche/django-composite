@@ -15,10 +15,8 @@ class Sub(object):
         self.resources.append(resource)
 
     def urls(self):
-        print 'self', self
         urls = []
         for resource in self.resources:
-            print 'resource', resource
             try:  # it might be another sub
                 urls.append(url(resource.path, include(resource.urls())))
             except AttributeError:  # it is not
