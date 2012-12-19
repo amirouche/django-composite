@@ -5,7 +5,6 @@ class Sub(object):
 
     application_namespace = None
     instance_namespace = None
-    name = None
 
     def __init__(self):
         self.resources = []
