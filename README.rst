@@ -95,7 +95,7 @@ How to contribute
 - Use ``Sub`` classes in an existing or new application. Mind the fact
   that you won't have to change existing code, if you already use
   `class-based-views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_.
-- `Create an issue <https://github.com/django-composite/django-composite/issues/new>_` if you want a new feature or you find a bug.
+- `Create an issue <https://github.com/django-composite/django-composite/issues/new>`_ if you want a new feature or you find a bug.
 - Fork, **create a new widget class**, and pull.
 - Fork, **create a new page class**, and pull.
 - `Read the code and provide feedback <https://github.com/django-composite/django-composite/commits/master>`_.
@@ -105,5 +105,5 @@ How to contribute
 Links
 -----
 
-- `forge <https://github.com/django-composite/django-composite>`_
+- `forge <https://github.com/django-composite/django-composite>`_issue
 - `documentation <https://django-composite.readthedocs.org/en/latest/>`_
