@@ -68,7 +68,7 @@ class Widget(object):
 
     def page(self):
         widget = self
-        while hasattr(self, 'parent'):
+        while hasattr(widget, 'parent'):
             widget = widget.parent
         return widget
 
