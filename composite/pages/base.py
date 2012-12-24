@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.http import HttpResponseForbidden
 from django.views.generic import TemplateView
@@ -73,9 +74,6 @@ class Page(TemplateView):
     css_files = list()
     body_class = None
 
-    def __init__(self, body_class=None):
-        self.body_class = body_class if body_class else self.body_class
-
     @classmethod
     def get_widgets(cls, self=None, request=None, *args, **kwargs):
         """It must be an iterable over the widgets
@@ -95,16 +93,25 @@ class Page(TemplateView):
         return ctx
 
     def dispatch(self, request, *args, **kwargs):
-        # superuser check
-        if self.is_superuser and not request.user.is_superuser:
-            return HttpResponseForbidden()
-        # is_staff check
-        if self.is_staff and not request.user.is_staff:
-            return HttpResponseForbidden()
-        # permissions checks
-        for permission in self.permissions:
-            if not request.user.has_perm(permission):
+        if ((self.is_superuser
+            or self.is_staff
+            or self.permissions)
+            and request.user.is_authenticated()):
+            # superuser check
+            if self.is_superuser and not request.user.is_superuser:
                 return HttpResponseForbidden()
+            # is_staff check
+            if self.is_staff and not request.user.is_staff:
+                return HttpResponseForbidden()
+            # permissions checks
+            for permission in self.permissions:
+                if not request.user.has_perm(permission):
+                    return HttpResponseForbidden()
+        if ((self.is_superuser
+            or self.is_staff
+            or self.permissions)
+            and not request.user.is_authenticated()):
+            return redirect('login')
 
         self.request = request
         self.args = args

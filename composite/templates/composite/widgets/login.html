@@ -1,0 +1,13 @@
+<form class="form-horizontal" action='' method="POST">
+    <fieldset>
+        <div id="legend">
+            <legend class="">Login</legend>
+        </div>
+        {% csrf_token %}
+        {{ form }}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+        </div>
+    </fieldset>
+</form>

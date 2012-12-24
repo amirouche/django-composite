@@ -5,7 +5,6 @@ from composite import Widget
 from composite.pages.bootstrap import HolyGrail
 
 
-
 class ValidableForm(forms.Form):
     form_name = forms.CharField(widget=forms.HiddenInput(), initial='ValidableForm', required=True)
 

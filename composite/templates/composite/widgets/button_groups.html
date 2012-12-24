@@ -1,0 +1,7 @@
+<div class=row>
+    <div class="btn-group">
+        {% for button in buttons %}
+            <a href="{% if button.1 %}{{ button.1 }}{% endif %}"><button class=btn>{{ button.0 }}</button></a>
+        {% endfor %}
+    </div>
+</div>
