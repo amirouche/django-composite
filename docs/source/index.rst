@@ -12,7 +12,7 @@ Welcome to django-composite's documentation!
 framework on top of the ``TemplateView`` class based view
 that offers new patterns to create reusable components for
 Django applications. It's bundled with a Twitter Bootstrap
-theme, with several predefined widgets and page layouts.
+theme, with several predefined widgets.
 
 It's super easy and super powerful! Check out those Django applications
 for example usages:
@@ -58,11 +58,8 @@ Check out the documentation about widgets to know more.
 - A very simple page is a class that inherits ``Page`` and 
   define the class property ``template_name``.
 - It can deal with permissions and static files.
-- Common css layouts built with Bootstrap are provided 
-  as ``Page`` class and can be used to build your applications
-- A page can be made of several widgets, depending on the layout
-  the configuration differs, refer the documentation of each
-  layout. It can be as simple as a list of widget class instances.
+- A page can be made of several widgets refer. It can be as 
+  simple as a list of widget class instances.
 
 Check out the documentation about pages to know more.
 
