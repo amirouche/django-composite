@@ -40,7 +40,7 @@ class String(Widget):
     def __init__(self, string):
         self.string = string
 
-    def render(self, request, *args, **kwargs):
+    def render(self, *args, **kwargs):
         return self.string
 
 
