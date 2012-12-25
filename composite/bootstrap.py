@@ -42,7 +42,7 @@ class LoginForm(forms.Form):
 
 class Login(Widget):
 
-    template_name = 'composite/widgets/login.html'
+    template_name = 'composite/bootstrap/widgets/login.html'
 
     def __init__(self, redirect_name):
         super(Login, self).__init__()
