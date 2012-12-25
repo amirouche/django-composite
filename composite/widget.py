@@ -62,9 +62,10 @@ class Widget(object):
     template_name = None
     widgets = []
 
-    def __init__(self, widget_id=None, *classes):
+    def __init__(self, widget_id=None, *classes, **attrs):
         self.widget_id = widget_id
         self.classes = classes
+        self.attrs = attrs
 
     def page(self):
         widget = self
@@ -111,7 +112,7 @@ class Widget(object):
         return cls.widgets
 
     def get_context_data(self, request, *args, **kwargs):
-        return dict(widget_id=self.widget_id, classes=self.classes)
+        return dict(widget_id=self.widget_id, classes=self.classes, attrs=self.attrs)
 
     def get_template_names(self):
         """
