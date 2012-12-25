@@ -12,7 +12,15 @@
       {% block body %}
           {% block header %}{% endblock %}
           <div class="container">
-              {% block container %}{% endblock %}
+              {% block container %}
+                  {% for row in widgets %}
+                      <div class=row>
+                          {% for widget in row %}
+                              {{ widget|safe }}
+                          {% endfor %}
+                      </div>
+                  {% endfor %}
+              {% endblock %}
           </div>
           {% block footer %}{% endblock %}
       {% endblock body %}

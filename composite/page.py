@@ -190,3 +190,4 @@ class BootstrapPage(Page):
 
     css_files = ['css/bootstrap.css', 'css/bootstrap-responsive.css']
     javascript_files = ['js/jquery.js', 'js/bootstrap.js']
+    template_name = 'composite/bootstrap/base.html'
