@@ -166,7 +166,7 @@ class Page(TemplateView):
                         # in the same order as it's done in ``Page.get``
                         # but using ``reponse``
                         # This is *must* be implemented in subclass
-                        return self.compute_error_page(response, widget, request, *args, **kwargs)
+                        return self.compute_error_page(response, request, *args, **kwargs)
                     # else continue to iterate over widgets
         # if it steps out of the loop without returning, it's most
         # likely a programming error raise 500

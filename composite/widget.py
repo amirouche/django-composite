@@ -100,7 +100,7 @@ class Widget(object):
         }
 
     @classmethod
-    def get_widgets(cls, self=None, page=None, request=None, *args, **kwargs):
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
         """You might want to override this to allow
         for a fine grained list of widget depending on the page
         and the request.
@@ -109,7 +109,7 @@ class Widget(object):
         you might want to cache the results for extra speed."""
         return cls.widgets
 
-    def get_context_data(self, page, request, *args, **kwargs):
+    def get_context_data(self, request, *args, **kwargs):
         return dict(widget_id=self.widget_id)
 
     def get_template_names(self):
@@ -124,7 +124,7 @@ class Widget(object):
         else:
             return [self.template_name]
 
-    def render(self, page, request, *args, **kwargs):
+    def render(self, request, *args, **kwargs):
         ctx = self.get_context_data(page, request, *args, **kwargs)
         return self.render_widget_with_context(page, request, ctx, *args, **kwargs)
 
