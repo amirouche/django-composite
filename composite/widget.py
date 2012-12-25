@@ -62,8 +62,9 @@ class Widget(object):
     template_name = None
     widgets = []
 
-    def __init__(self, widget_id=None):
+    def __init__(self, widget_id=None, *classes):
         self.widget_id = widget_id
+        self.classes = classes
 
     def page(self):
         widget = self
@@ -110,7 +111,7 @@ class Widget(object):
         return cls.widgets
 
     def get_context_data(self, request, *args, **kwargs):
-        return dict(widget_id=self.widget_id)
+        return dict(widget_id=self.widget_id, classes=self.classes)
 
     def get_template_names(self):
         """
@@ -125,15 +126,18 @@ class Widget(object):
             return [self.template_name]
 
     def render(self, request, *args, **kwargs):
-        ctx = self.get_context_data(page, request, *args, **kwargs)
-        return self.render_widget_with_context(page, request, ctx, *args, **kwargs)
+        ctx = self.get_context_data(request, *args, **kwargs)
+        return self.render_widget_with_context(request, ctx, *args, **kwargs)
 
-    def render_widget_with_context(self, page, request, ctx, *args, **kwargs):
-        ctx = RequestContext(request, ctx)
+    def render_subwidgets(self, request, *args, **kwargs):
         widgets = list()
-        for widget in self.get_widgets(self, page, request, *args, **kwargs):
-            widget = widget.render(page, request, *args, **kwargs)
+        for widget in self.get_widgets(self, request, *args, **kwargs):
+            widget = widget.render(request, *args, **kwargs)
             widgets.append(widget)
-        ctx['widgets'] = widgets
+        return widgets
+
+    def render_widget_with_context(self, request, ctx, *args, **kwargs):
+        ctx['widgets'] = self.render_subwidgets(self, request, *args, **kwargs)
+        ctx = RequestContext(request, ctx)
         widget = render_to_string(self.get_template_names(), ctx)
         return widget
