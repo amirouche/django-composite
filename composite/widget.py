@@ -62,9 +62,8 @@ class Widget(object):
     template_name = None
     widgets = []
 
-    def __init__(self, widget_id=None, template_name=None):
+    def __init__(self, widget_id=None):
         self.widget_id = widget_id
-        self.template_name = template_name if template_name else self.template_name
 
     def page(self):
         widget = self
