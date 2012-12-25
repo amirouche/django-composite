@@ -75,6 +75,9 @@ class Page(TemplateView):
     body_class = None
     widgets = []
 
+    name = None
+    path = r'^'
+
     @classmethod
     def get_widgets(cls, self=None, request=None, *args, **kwargs):
         """It must be an iterable over the widgets
