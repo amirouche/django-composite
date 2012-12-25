@@ -5,12 +5,12 @@ from widget import Widget
 
 class Tag(Widget):
 
-    def __init__(self, name, widget_id=None, classes=None, attributes=None, *widgets):
+    def __init__(self, name, widget_id=None, classes=None, *widgets, **attrs):
         super(Tag, self).__init__(widget_id)
         self.widgets = widgets
         self.classes = classes
         self.name = name
-        self.attributes = attributes
+        self.attributes = attrs
 
     def render(self, request, *args, **kwargs):
         # render opening tag
@@ -31,8 +31,8 @@ class Tag(Widget):
 
 class Div(Tag):
 
-    def __init__(self, widget_id=None, classes=None, *widgets):
-        super(Div, self).__init__('div', widget_id, classes, *widgets)
+    def __init__(self, widget_id=None, classes=None, *widgets, **attrs):
+        super(Div, self).__init__('div', widget_id, classes, *widgets, **attrs)
 
 
 class String(Widget):
@@ -46,9 +46,9 @@ class String(Widget):
 
 class Link(Tag):
 
-    def __init__(self, url, widget_id=None, classes=None, extra_attributes=None, *widgets):
+    def __init__(self, url, widget_id=None, classes=None, *widgets, **attrs):
         if not url.startswith('#'):
             url = reverse(url)
-        attributes = dict(href=url)
-        attributes.update(extra_attributes)
-        super(Link, self).__init__('a', widget_id, classes, attributes, *widgets)
+        extra = dict(href=url)
+        extra.update(attrs)
+        super(Link, self).__init__('a', widget_id, classes, *widgets, **extra)
