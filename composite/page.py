@@ -73,6 +73,7 @@ class Page(TemplateView):
     javascript_files = list()
     css_files = list()
     body_class = None
+    widgets = []
 
     @classmethod
     def get_widgets(cls, self=None, request=None, *args, **kwargs):
@@ -83,9 +84,8 @@ class Page(TemplateView):
         must be included in the page *whatever* the request is.
         If ``request`` is not provided, it must return all the widgets the
         page can possibly render.
-
-        You must override this method in a subclass."""
-        return []
+        """
+        return cls.widgets
 
     def get_context_data(self, request, *args, **kwargs):
         ctx = dict(self.static_files_cache)
