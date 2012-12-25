@@ -4,7 +4,21 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy
 
+from page import Page
 from widget import Widget
+
+
+class BootstrapPage(Page):
+    """Base class for all Bootstrap pages this will embed
+    minimal non-minified static files provided in Bootstrap 2.2.2
+    for a responsive layout.
+    If you need to add or replace default static files
+    override ``__init__`` method and don't break the Internet.
+    """
+
+    css_files = ['css/bootstrap.css', 'css/bootstrap-responsive.css']
+    javascript_files = ['js/jquery.js', 'js/bootstrap.js']
+    template_name = 'composite/bootstrap/base.html'
 
 
 class LoginForm(forms.Form):
