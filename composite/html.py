@@ -47,8 +47,7 @@ class String(Widget):
 class Link(Tag):
 
     def __init__(self, url, widget_id=None, classes=None, *widgets, **attrs):
-        if not url.startswith('#'):
-            url = reverse(url)
+
         extra = dict(href=url)
         extra.update(attrs)
         super(Link, self).__init__('a', widget_id, classes, *widgets, **extra)
