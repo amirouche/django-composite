@@ -10,8 +10,8 @@ class MetaPage(type):
 
     def __new__(cls, name, bases, dct):
         cls = type.__new__(cls, name, bases, dct)
-        # Cache static files and permissions
-        # Add parents static files
+        # Cache static files and this class permissions
+        # add parents static files
         for base in bases:
             try:
                 css_files = OrderedSet(base.static_files_cache['css_files'])
@@ -42,7 +42,6 @@ class MetaPage(type):
             widget_statics = widget.get_static_files()
             map(javascript_files.add, widget_statics['javascript_files'])
             map(css_files.add, widget_statics['css_files'])
-            permissions.extend(widget.get_permissions())
 
         cls.static_files_cache = {
             'css_files': css_files,
@@ -95,10 +94,21 @@ class Page(TemplateView):
         ctx['body_class'] = self.body_class
         return ctx
 
+    def get_permissions(self, request, *args, **kwargs):
+        permissions = list(self.permissions)
+        for permission in permissions:
+            yield permission
+        for widget in self.get_widgets(self, self, request, *args, **kwargs):
+            for permission in widget.get_permissions(request, *args, **kwargs):
+                if permission not in permissions:
+                    permissions.append(permission)
+                    yield permission
+
     def dispatch(self, request, *args, **kwargs):
+        permissions = list(self.get_permissions(self, request, *args, **kwargs))
         if ((self.is_superuser
             or self.is_staff
-            or self.permissions)
+            or permissions)
             and request.user.is_authenticated()):
             # superuser check
             if self.is_superuser and not request.user.is_superuser:
@@ -107,12 +117,12 @@ class Page(TemplateView):
             if self.is_staff and not request.user.is_staff:
                 return HttpResponseForbidden()
             # permissions checks
-            for permission in self.permissions:
+            for permission in permissions:
                 if not request.user.has_perm(permission):
                     return HttpResponseForbidden()
         if ((self.is_superuser
             or self.is_staff
-            or self.permissions)
+            or permissions)
             and not request.user.is_authenticated()):
             return redirect('login')
 

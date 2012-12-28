@@ -31,7 +31,6 @@ class MetaWidget(type):
             'javascript_files': javascript_files,
         }
 
-        permissions.extend(cls.get_permissions())
         cls.permissions = permissions
 
         # hook parent widget to direct children widgets
@@ -73,16 +72,19 @@ class Widget(object):
             widget = widget.parent
         return widget
 
-    @classmethod
-    def get_permissions(cls):
+    def get_permissions(self, request, *args, **kwargs):
         """Used internally to compute permissions.
 
         To know the permissions associated with this widget,
         use ``permissions`` property on the widget"""
-        permissions = cls.permissions
-        for widget in cls.widgets:
-            permissions.extends(widget.get_permissions())
-        return permissions
+        permissions = list(self.permissions)
+        for permission in permissions:
+            yield permissions
+        for widget in self.get_widgets():
+            for permission in widget.get_permissions():
+                if permission not in permissions:
+                    yield permission
+                    permissions.append(permission)
 
     @classmethod
     def get_static_files(cls):
