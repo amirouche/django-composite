@@ -129,17 +129,17 @@ class Page(TemplateView):
             or permissions)
             and request.user.is_authenticated()):
             # superuser check
-            if self.is_superuser and not request.user.is_superuser:
+            if is_superuser and not request.user.is_superuser:
                 return HttpResponseForbidden()
             # is_staff check
-            if self.is_staff and not request.user.is_staff:
+            if is_staff and not request.user.is_staff:
                 return HttpResponseForbidden()
             # permissions checks
             for permission in permissions:
                 if not request.user.has_perm(permission):
                     return HttpResponseForbidden()
-        if ((self.is_superuser
-            or self.is_staff
+        if ((is_superuser
+            or is_staff
             or permissions)
             and not request.user.is_authenticated()):
             return redirect('login')
