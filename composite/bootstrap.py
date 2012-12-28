@@ -4,11 +4,8 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy
 
+from page import Page
 from widget import Widget
-
-from html import Tag
-from html import Link
-from html import String
 
 
 # Page
