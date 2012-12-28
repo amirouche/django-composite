@@ -4,9 +4,14 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy
 
-from page import Page
 from widget import Widget
 
+from html import Tag
+from html import Link
+from html import String
+
+
+# Page
 
 class BootstrapPage(Page):
     """Base class for all Bootstrap pages this will embed
@@ -20,6 +25,8 @@ class BootstrapPage(Page):
     javascript_files = ['js/jquery.js', 'js/bootstrap.js']
     template_name = 'composite/bootstrap/base.html'
 
+
+# Form widgets
 
 class LoginForm(forms.Form):
     name = forms.CharField(widget=forms.HiddenInput(), initial='LoginForm', required=True)
