@@ -1,4 +1,7 @@
 from sub import Sub
 from widget import Widget
 from page import Page
-from page import BootstrapPage
+from bootstrap import BootstrapPage
+
+
+__version__ = '0.1'
