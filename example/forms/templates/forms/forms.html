@@ -1,9 +1,0 @@
-<div class="span4 form {% if errors %}errors{% endif %}" id="{{ widget_id }}">
-    <h5>{{ widget_id }}</h5>
-    <p>If the forms validates you are redirected to index. This  is stupid but if you read the code, you will get the point.</p>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form }}
-        <input type="submit"/>
-    </form>
-</div>
