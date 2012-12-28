@@ -66,6 +66,22 @@ class Widget(object):
         self.classes = classes
         self.attrs = attrs
 
+    def get_is_superuser(self, request, *args, **kwargs):
+        if self.is_superuser:
+            return True
+        else:
+            for widget in self.get_widgets(request, *args, **kwargs):
+                if widget.is_superuser:
+                    return True
+
+    def get_is_staff(self, request, *args, **kwargs):
+        if self.is_staff:
+            return True
+        else:
+            for widget in self.get_widgets(request, *args, **kwargs):
+                if widget.is_staff:
+                    return True
+
     def page(self):
         widget = self
         while hasattr(widget, 'parent'):

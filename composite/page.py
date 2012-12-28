@@ -104,10 +104,28 @@ class Page(TemplateView):
                     permissions.append(permission)
                     yield permission
 
+    def get_is_superuser(self, request, *args, **kwargs):
+        if self.is_superuser:
+            return True
+        else:
+            for widget in self.get_widgets(request, *args, **kwargs):
+                if widget.is_superuser:
+                    return True
+
+    def get_is_staff(self, request, *args, **kwargs):
+        if self.is_staff:
+            return True
+        else:
+            for widget in self.get_widgets(request, *args, **kwargs):
+                if widget.is_staff:
+                    return True
+
     def dispatch(self, request, *args, **kwargs):
         permissions = list(self.get_permissions(self, request, *args, **kwargs))
-        if ((self.is_superuser
-            or self.is_staff
+        is_superuser = self.get_is_superuser()
+        is_staff = self.get_is_staff()
+        if ((is_superuser
+            or is_staff
             or permissions)
             and request.user.is_authenticated()):
             # superuser check
