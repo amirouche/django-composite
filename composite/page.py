@@ -92,6 +92,7 @@ class Page(TemplateView):
     def get_context_data(self, request, *args, **kwargs):
         ctx = dict(self.static_files_cache)
         ctx['body_class'] = self.body_class
+        ctx['widgets'] = self.get_widgets()
         return ctx
 
     def get_permissions(self, request, *args, **kwargs):
@@ -122,8 +123,8 @@ class Page(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         permissions = list(self.get_permissions(self, request, *args, **kwargs))
-        is_superuser = self.get_is_superuser()
-        is_staff = self.get_is_staff()
+        is_superuser = self.get_is_superuser(request, *args, **kwargs)
+        is_staff = self.get_is_staff(request, *args, **kwargs)
         if ((is_superuser
             or is_staff
             or permissions)
