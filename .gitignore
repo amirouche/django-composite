@@ -1,2 +1,5 @@
 *.pyc
 *~
+*egg*
+dist
+PKG-INFO

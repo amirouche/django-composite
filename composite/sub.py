@@ -5,9 +5,13 @@ class Sub(object):
 
     application_namespace = None
 
+    views = list()
+
     def __init__(self, instance_namespace=None):
         self.resources = []
         self.instance_namespace = instance_namespace
+        for view in self.views:
+            self.register(view)
 
     def register(self, resource):
         resource.sub = self

@@ -22,7 +22,7 @@ for example usages:
   admin contrib application built from scratch for extensibility.
   It takes advantage of Bootstrap 2 to refresh the look'n'feel 
   and be responsive.
-- `django-composite-cms <https://github.com/django-composite/django-composite-cms>`_ is a cms.
+- `django-composite-cms <https://github.com/django-composite/django-composite-cms>`_ is a cms (TBD)
 - `Your Django application or project here ?... <mailto:amirouche.boubekki+composite@gmail.com>`_
 
 
@@ -43,9 +43,9 @@ Features
   and made available as ``widgets`` in the template.
 - It can process requests on its own.
 - You can quickly boot your project or application with the bundled 
-  bootstrap widgets.
+  bootstrap widgets. (TBD)
 
-Check out the documentation about widgets to know more.
+Check out the documentation about widgets to know more. (TBD)
 
 ``composite.Page``
 ^^^^^^^^^^^^^^^^^^
@@ -76,12 +76,12 @@ Check out the documentation about pages to know more.
 - Any ``Page`` class can be added to a ``Sub`` instance, it will
   have a reference to the ``Sub`` it is part of via ``Page.sub``
 - a ``Sub`` instance can be added to another ``Sub`` instance, and it will
-   have a reference to its parent ``Sub`` via ``Sub.sub``.
+  have a reference to its parent ``Sub`` via ``Sub.sub``.
 - You inherit any ``Sub`` to add features or configure it.
 - You can hook in your project or application several instance of 
-  the same ``Sub`` class
+  the same ``Sub`` class (TBD)
 
-Check out the documentation about subs to know more.
+Check out the documentation about subs to know more. (TBD)
 
 
 Dependencies
@@ -93,15 +93,19 @@ Dependencies
 How to contribute
 -----------------
 
-- `Star <https://github.com/django-composite/django-composite/star>`_, watch and `tweet <http://twitter.com/home?status=https://github.com/django-composite/django-composite>`_ about it.
+- `Star <https://github.com/django-composite/django-composite/star>`_, watch 
+  and `tweet <http://twitter.com/home?status=https://github.com/django-composite/django-composite>`_ 
+  about it.
 - Use ``Sub`` classes in an existing or new application. Mind the fact
   that you won't have to change existing code, if you already use
   `class-based-views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_.
-- `Create an issue <https://github.com/django-composite/django-composite/issues/new>`_ if you want a new feature or you find a bug.
+- `Create an issue <https://github.com/django-composite/django-composite/issues/new>`_ 
+  if you want a new feature or you find a bug.
 - Fork, **create a new widget class**, and pull.
 - Fork, **create a new page class**, and pull.
 - `Read the code and provide feedback <https://github.com/django-composite/django-composite/commits/master>`_.
-- Shim in the issue list, discuss or fix those that interest you.
+- Chime in the issue list, discuss or fix those that interest you or add others that you
+  would like to see fixed.
 - Also check out `django-composite-admin <https://github.com/django-composite/django-composite-admin>`_
 
 Links
@@ -110,16 +114,13 @@ Links
 - `forge <https://github.com/django-composite/django-composite>`_
 - `documentation <https://django-composite.readthedocs.org/en/latest/>`_
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
 
    getting_started
-   advanced
-   bootstrap
-
-Thanks for using django-composite.
 
 Indices and tables
 ==================

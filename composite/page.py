@@ -37,9 +37,10 @@ class MetaPage(type):
         except KeyError:
             pass
 
-        for widget in cls.get_widgets():
-            widget.parent = cls
-            widget_statics = widget.get_static_files()
+        for WidgetClass in cls.widgets:
+            if isinstance(WidgetClass, (tuple, list)):
+                WidgetClass = WidgetClass[0]
+            widget_statics = WidgetClass.get_static_files()
             map(javascript_files.add, widget_statics['javascript_files'])
             map(css_files.add, widget_statics['css_files'])
 
@@ -77,54 +78,62 @@ class Page(TemplateView):
     name = None
     path = r'^'
 
-    @classmethod
-    def get_widgets(cls, self=None, request=None, *args, **kwargs):
-        """It must be an iterable over the widgets
-        of the page.
+    def get_widgets(self):
+        try:
+            for widget in self._widgets:
+                yield widget
+        except AttributeError:
+            self._widgets = list()
+            for WidgetClass in self.widgets:
+                if isinstance(WidgetClass, (tuple, list)):
+                    args = list(WidgetClass[1:])
+                    args.insert(0, self)
+                    WidgetClass = WidgetClass[0]
+                else:
+                    args = (self,)
+                widget = WidgetClass(*args)
+                self._widgets.append(widget)
+                yield widget
 
-        It is used to compute all the static files that
-        must be included in the page *whatever* the request is.
-        If ``request`` is not provided, it must return all the widgets the
-        page can possibly render.
-        """
-        return cls.widgets
-
-    def get_context_data(self, request, *args, **kwargs):
+    def get_context_data(self):
         ctx = dict(self.static_files_cache)
         ctx['body_class'] = self.body_class
-        ctx['widgets'] = self.get_widgets()
         return ctx
 
-    def get_permissions(self, request, *args, **kwargs):
+    def get_permissions(self):
         permissions = list(self.permissions)
         for permission in permissions:
             yield permission
-        for widget in self.get_widgets(self, self, request, *args, **kwargs):
-            for permission in widget.get_permissions(request, *args, **kwargs):
+        for widget in self.get_widgets():
+            for permission in widget.get_permissions():
                 if permission not in permissions:
                     permissions.append(permission)
                     yield permission
 
-    def get_is_superuser(self, request, *args, **kwargs):
+    def get_is_superuser(self):
         if self.is_superuser:
             return True
         else:
-            for widget in self.get_widgets(request, *args, **kwargs):
+            for widget in self.get_widgets():
                 if widget.is_superuser:
                     return True
 
-    def get_is_staff(self, request, *args, **kwargs):
+    def get_is_staff(self):
         if self.is_staff:
             return True
         else:
-            for widget in self.get_widgets(request, *args, **kwargs):
+            for widget in self.get_widgets():
                 if widget.is_staff:
                     return True
 
     def dispatch(self, request, *args, **kwargs):
-        permissions = list(self.get_permissions(self, request, *args, **kwargs))
-        is_superuser = self.get_is_superuser(request, *args, **kwargs)
-        is_staff = self.get_is_staff(request, *args, **kwargs)
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+
+        permissions = list(self.get_permissions())
+        is_superuser = self.get_is_superuser()
+        is_staff = self.get_is_staff()
         if ((is_superuser
             or is_staff
             or permissions)
@@ -145,9 +154,6 @@ class Page(TemplateView):
             and not request.user.is_authenticated()):
             return redirect('login')
 
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
         # but we defer to error handler only if the ``request.method``
         # method is defined nowhere in the page or its widgets
         # otherwise it's a a programming error and not a
@@ -175,7 +181,7 @@ class Page(TemplateView):
             # look for method on the current page
             handler = getattr(self, method, None)
             if handler:
-                response = handler(request, *args, **kwargs)
+                response = handler()
                 if response:
                     # if there is response then it can be a) a redirect
                     # b) the page fully rendered with an error form
@@ -183,10 +189,10 @@ class Page(TemplateView):
                     return response
             # oups! there were no such method or it wasn't the right
             # form, iterate over widgets to find a possible match
-            for widget in self.get_widgets(self, request, *args, **kwargs):
+            for widget in self.get_widgets():
                 handler = getattr(widget, method, None)
                 if handler:
-                    response = handler(self, request, *args, **kwargs)
+                    response = handler()
                     if response:
                         if isinstance(response, HttpResponseRedirect):
                             return response
@@ -195,18 +201,22 @@ class Page(TemplateView):
                         # in the same order as it's done in ``Page.get``
                         # but using ``reponse``
                         # This is *must* be implemented in subclass
-                        return self.compute_error_page(response, request, *args, **kwargs)
+                        return self.compute_error_page(response)
                     # else continue to iterate over widgets
         # if it steps out of the loop without returning, it's most
         # likely a programming error raise 500
         msg = 'HTTP method ``%s`` called on view class but not defined' % method
         raise RuntimeError(msg)
 
-    def get(self, request, *args, **kwargs):
+    def render_widgets(self):
+        for widget in self.get_widgets():
+            yield widget.render()
+
+    def get(self):
         # The following line is the only difference with
         # ``TemplateView.get``, it adds ``request`` and ``*args``
         # as arguments of ``get_context_data()`` since they are
         # needed by widget classes to do the rendering
-        context = self.get_context_data(request, *args, **kwargs)
-        r = self.render_to_response(context)
-        return r
+        context = self.get_context_data()
+        context['widgets'] = ''.join(self.render_widgets())
+        return self.render_to_response(context)

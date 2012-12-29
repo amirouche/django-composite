@@ -23,7 +23,7 @@ class Tag(Widget):
                 widget += ' %s="%s"' % (key, value)
         # render subwigets and closing tag
         subwidgets = self.render_subwidgets(request, *args, **kwargs)
-        widget += '>%s</%s>' % (subwidgets, self.name)
+        widget += '>%s</%s>' % (''.join(subwidgets), self.name)
         return widget
 
 

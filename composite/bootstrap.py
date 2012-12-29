@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy
 
+from html import Div
 from page import Page
 from widget import Widget
 

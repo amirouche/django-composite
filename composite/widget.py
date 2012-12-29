@@ -33,9 +33,6 @@ class MetaWidget(type):
 
         cls.permissions = permissions
 
-        # hook parent widget to direct children widgets
-        for widget in cls.get_widgets():
-            widget.parent = cls
         return cls
 
 
@@ -61,24 +58,42 @@ class Widget(object):
     template_name = None
     widgets = []
 
-    def __init__(self, widget_id=None, *classes, **attrs):
-        self.widget_id = widget_id
-        self.classes = classes
-        self.attrs = attrs
+    def __init__(self, parent):
+        self.parent = parent
+        self.request = parent.request
+        self.args = parent.args
+        self.kwargs = parent.kwargs
 
-    def get_is_superuser(self, request, *args, **kwargs):
+    def get_widgets(self):
+        try:
+            for widget in self._widgets:
+                yield widget
+        except AttributeError:
+            self._widgets = list()
+            for WidgetClass in self.widgets:
+                if isinstance(WidgetClass, (tuple, list)):
+                    args = WidgetClass[1:]
+                    args.insert(0, self)
+                    WidgetClass = WidgetClass[0]
+                else:
+                    args = (self,)
+                widget = WidgetClass(*args)
+                self._widgets.append(widget)
+                yield widget
+
+    def get_is_superuser(self):
         if self.is_superuser:
             return True
         else:
-            for widget in self.get_widgets(request, *args, **kwargs):
+            for widget in self.get_widgets():
                 if widget.is_superuser:
                     return True
 
-    def get_is_staff(self, request, *args, **kwargs):
+    def get_is_staff(self):
         if self.is_staff:
             return True
         else:
-            for widget in self.get_widgets(request, *args, **kwargs):
+            for widget in self.get_widgets():
                 if widget.is_staff:
                     return True
 
@@ -88,7 +103,7 @@ class Widget(object):
             widget = widget.parent
         return widget
 
-    def get_permissions(self, request, *args, **kwargs):
+    def get_permissions(self):
         """Used internally to compute permissions.
 
         To know the permissions associated with this widget,
@@ -106,7 +121,9 @@ class Widget(object):
     def get_static_files(cls):
         css_files = OrderedSet(cls.css_files)
         javascript_files = OrderedSet(cls.javascript_files)
-        for widget in cls.widgets:
+        for WidgetClass in cls.widgets:
+            if isinstance(WidgetClass, (tuple, list)):
+                WidgetClass = WidgetClass[0]
             # we need to keep this always in the same order
             # or the designer will be mad
             map(css_files.add, widget.css_files)
@@ -119,18 +136,8 @@ class Widget(object):
             'javascript_files': javascript_files,
         }
 
-    @classmethod
-    def get_widgets(cls, self=None, request=None, *args, **kwargs):
-        """You might want to override this to allow
-        for a fine grained list of widget depending on the page
-        and the request.
-
-        Mind the fact that this is called for every request, thus
-        you might want to cache the results for extra speed."""
-        return cls.widgets
-
-    def get_context_data(self, request, *args, **kwargs):
-        return dict(widget_id=self.widget_id, classes=self.classes, attrs=self.attrs)
+    def get_context_data(self):
+        return dict()
 
     def get_template_names(self):
         """
@@ -144,19 +151,16 @@ class Widget(object):
         else:
             return [self.template_name]
 
-    def render(self, request, *args, **kwargs):
-        ctx = self.get_context_data(request, *args, **kwargs)
-        return self.render_widget_with_context(request, ctx, *args, **kwargs)
+    def render(self):
+        ctx = self.get_context_data()
+        return self.render_widget_with_context(ctx)
 
-    def render_subwidgets(self, request, *args, **kwargs):
-        widgets = list()
-        for widget in self.get_widgets(self, request, *args, **kwargs):
-            widget = widget.render(request, *args, **kwargs)
-            widgets.append(widget)
-        return widgets
+    def render_subwidgets(self):
+        for widget in self.get_widgets():
+            yield widget.render()
 
-    def render_widget_with_context(self, request, ctx, *args, **kwargs):
-        ctx['widgets'] = self.render_subwidgets(self, request, *args, **kwargs)
-        ctx = RequestContext(request, ctx)
+    def render_widget_with_context(self, ctx):
+        ctx['widgets'] = self.render_subwidgets()
+        ctx = RequestContext(self.request, ctx)
         widget = render_to_string(self.get_template_names(), ctx)
         return widget
