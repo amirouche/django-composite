@@ -38,4 +38,3 @@ class CollectionTests(TestCase):
             add_view_collection('test/', NestedViewCollection, 'nested')
 
         urlpatterns = ParentViewCollection.include_urls('instance')
-        import debug
