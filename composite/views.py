@@ -15,7 +15,7 @@ from utils import OrderedSet
 
 
 class AutoRenderTemplateResponse(TemplateResponse):
-    """Reponse that can rendered in a template"""
+    """Reponse that can be rendered in a template"""
 
     def __str__(self):
         self.render()
