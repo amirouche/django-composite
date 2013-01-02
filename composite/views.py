@@ -194,7 +194,7 @@ class ViewCollection(object):
                     urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
 
             else:
-                collection = (url.instance_namespace, **url.initkwargs)
+                collection = url.collection_class(url.instance_namespace, **url.initkwargs)
                 collection.collection = self
                 include_urls = collection._include_urls()
                 urls.append((url.path, include_urls))
