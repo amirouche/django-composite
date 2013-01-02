@@ -189,9 +189,13 @@ class ViewCollection(object):
                 if type(url.view) == FunctionType:
                     urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
                 else:
+                    view = view()
+                    view.collection = self
                     urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
 
             else:
-                include_urls = url.collection_class.include_urls(url.instance_namespace, **url.initkwargs)
+                collection = (url.instance_namespace, **url.initkwargs)
+                collection.collection = self
+                include_urls = collection._include_urls()
                 urls.append((url.path, include_urls))
         return include(patterns('', *urls), self.application_namespace, self.instance_namespace)
