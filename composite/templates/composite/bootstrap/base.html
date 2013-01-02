@@ -13,7 +13,9 @@
           {% block header %}{% endblock %}
           <div class="container">
               {% block container %}
-                  {{ widgets|safe }}
+                  {% for composite in composites %}
+                      {{ composite|safe }}
+                  {% endfor %}
               {% endblock %}
           </div>
           {% block footer %}{% endblock %}
