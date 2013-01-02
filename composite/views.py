@@ -33,10 +33,13 @@ class MetaComposite(type):
         for base in bases:
             for attr_name in ['css_files', 'javascript_files']:
                 attr = getattr(cls, attr_name)
-                try:
-                    map(attr.add, attrs[attr_name])
-                except KeyError:
-                    pass
+                map(attr.add, getattr(base, attr_name, list()))
+        for attr_name in ['css_files', 'javascript_files']:
+            attr = getattr(cls, attr_name)
+            try:
+                map(attr.add, attrs[attr_name])
+            except KeyError:
+                pass
 
         try:
             composites = cls.composites_class()

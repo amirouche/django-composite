@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.http import HttpRequest
 
 from ..views import Composite
+from ..utils import OrderedSet
 from ..views import StackedComposite
 
 
@@ -43,8 +44,8 @@ class CompositeTests(TestCase):
 
         composite = Child()
         context = composite.get_context_data()
-        self.assertEqual(context['javascript_files'], ['first.js', 'second.js'])
-        self.assertEqual(context['css_files'], ['first.css', 'second.css'])
+        self.assertEqual(context['javascript_files'], OrderedSet(['first.js', 'second.js']))
+        self.assertEqual(context['css_files'], OrderedSet(['first.css', 'second.css']))
 
     def test_composite_includes_sub_composites_statics(self):
 
@@ -62,8 +63,8 @@ class CompositeTests(TestCase):
             def composites_class(self):
                 yield SubComposite
 
-        self.assertEqual(TestComposite.javascript_files, ['parent.js', 'sub.js'])
-        self.assertEqual(TestComposite.css_files, ['parent.css', 'sub.css'])
+        self.assertEqual(TestComposite.javascript_files, OrderedSet(['parent.js', 'sub.js']))
+        self.assertEqual(TestComposite.css_files, OrderedSet(['parent.css', 'sub.css']))
 
 
 class StackedCompositeTest(TestCase):
