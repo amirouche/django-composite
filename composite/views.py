@@ -80,8 +80,8 @@ class Composite(TemplateView):
             self.head = self.get
         return self.dispatch(request, *args, **kwargs)
 
-    def get_context_data(self):
-        context = super(Composite, self).get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super(Composite, self).get_context_data(**kwargs)
         context['css_files'] = self.css_files
         context['javascript_files'] = self.javascript_files
         return context
@@ -146,8 +146,6 @@ def add_url(path, view, initkwargs=None, name=None):
     if locals is frame.f_globals or '__module__' not in locals:
         raise TypeError("url can be used only from a class url.")
 
-    if 'urls' not in locals:
-        locals['urls'] = list()
     initkwargs = initkwargs if initkwargs else dict()
     view = ViewInfo(path, view, initkwargs, name)
     locals['urls'].append(view)
@@ -163,8 +161,6 @@ def add_view_collection(path, collection_class, instance_namespace=None, initkwa
     if locals is frame.f_globals or '__module__' not in locals:
         raise TypeError("url can be used only from a class url.")
 
-    if 'urls' not in locals:
-        locals['urls'] = list()
 
     initkwargs = initkwargs if initkwargs else dict()
     url = ViewCollectionInfo(path, collection_class, instance_namespace, initkwargs)
@@ -172,7 +168,7 @@ def add_view_collection(path, collection_class, instance_namespace=None, initkwa
 
 
 class ViewCollection(object):
-
+    urls = list()
     application_namespace = None
 
     def __init__(self, instance_namespace=None):
@@ -182,17 +178,26 @@ class ViewCollection(object):
     def include_urls(cls, instance_namespace=None, **kwargs):
         return cls(instance_namespace, **kwargs)._include_urls()
 
+    def add_view(self, path, view, initkwargs=None, name=None):
+        initkwargs = initkwargs if initkwargs else dict()
+        url = ViewInfo(path, view, initkwargs, name)
+        self.urls.append(url)
+
+    def add_collection(self, path, collection_class=None, instance_namespace=None, initkwargs=None):
+        initkwargs = initkwargs if initkwargs else dict()
+        url = ViewCollectionInfo(path, collection_class, instance_namespace, initkwargs)
+        self.urls.append(url)
+
     def _include_urls(self):
         urls = list()
         for url in self.urls:
             if isinstance(url, ViewInfo):
-                if type(url.view) == FunctionType:
+                if isinstance(url.view, FunctionType):
                     urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
                 else:
-                    view = view()
+                    view = url.view()
                     view.collection = self
-                    urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
-
+                    urls.append(django_url(url.path, view, url.initkwargs, url.name))
             else:
                 collection = url.collection_class(url.instance_namespace, **url.initkwargs)
                 collection.collection = self
