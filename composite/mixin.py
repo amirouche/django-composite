@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth.decorators import login_required
@@ -19,6 +20,6 @@ class PermissionRequiredMixin(object):
         has_permission = request.user.has_perm(self.get_permissions_required())
 
         if not has_permission:
-            return redirect_to_login(request.get_full_path())
+            return redirect_to_login(request.get_full_path(), reverse('login'))
 
         return super(PermissionRequiredMixin, self).dispatch(request, *args, **kwargs)
