@@ -1,6 +1,7 @@
 from types import MethodType
 
 from django.views.generic import TemplateView
+from django.conf.urls import patterns, url, include
 from django.template.response import TemplateResponse
 
 from utils import OrderedSet
@@ -119,3 +120,32 @@ class StackedComposite(Composite):
             responses.append(response)
         context = dict(composites=responses)
         return context
+
+
+def duplicate(view, name):
+    """create a new class based on ``view`` and append ``name`` to its name"""
+    name = '%s%s' % (view.__name__, name)
+    duplicate = type(name, (view,), dict())
+    return duplicate
+
+
+class ClassBasedViewCollection(object):
+
+    application_namespace = None
+
+    def __init__(self, instance_namespace=None):
+        self.urlpatterns = patterns()
+        self.instance_namespace = instance_namespace
+
+    def add_view(self, path, view, name=None):
+        # duplicate the view so that it possible to reference
+        # the collection in the view without risks
+        new_view = duplicate(view, type(self).__name__)
+        new_view.collection = self
+        self.urlpatterns += patterns(url(path, view, name=name))
+
+    def add_collection(self, path, collection):
+        self.urlpatterns += patterns(path, collection.include_urlpatterns())
+
+    def include_urlpatterns(self):
+        return include((self.urlpatterns, self.application_namespace, self.instance_namespace))
