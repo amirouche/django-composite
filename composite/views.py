@@ -1,7 +1,14 @@
-from types import MethodType
+import sys
 
+from types import MethodType
+from types import FunctionType
+
+from collections import namedtuple
+
+from django.conf.urls import url as django_url
+from django.conf.urls import include
+from django.conf.urls import patterns
 from django.views.generic import TemplateView
-from django.conf.urls import patterns, url, include
 from django.template.response import TemplateResponse
 
 from utils import OrderedSet
@@ -122,30 +129,69 @@ class StackedComposite(Composite):
         return context
 
 
-def duplicate(view, name):
-    """create a new class based on ``view`` and append ``name`` to its name"""
-    name = '%s%s' % (view.__name__, name)
-    duplicate = type(name, (view,), dict())
-    return duplicate
+ViewInfo = namedtuple('ViewInfo', ('path', 'view', 'initkwargs', 'name'))
+ViewCollectionInfo = namedtuple('ViewCollectionInfo', ('path', 'collection_class', 'instance_namespace', 'initkwargs'))
+
+# borrowed from zope.interface.declarations._interface
+def add_url(path, view, initkwargs=None, name=None):
+    # XXX: comment taken from zope.interface:
+    # This entire approach is invalid under Py3K.  Don't even try to fix
+    # the coverage for this block there. :(
+    frame = sys._getframe(1)
+    locals = frame.f_locals
+
+    # Try to make sure we were called from a class def. In 2.2.0 we can't
+    # check for __module__ since it doesn't seem to be added to the locals
+    # until later on.
+    if locals is frame.f_globals or '__module__' not in locals:
+        raise TypeError("url can be used only from a class url.")
+
+    if 'urls' not in locals:
+        locals['urls'] = list()
+    initkwargs = initkwargs if initkwargs else dict()
+    view = ViewInfo(path, view, initkwargs, name)
+    locals['urls'].append(view)
 
 
-class ClassBasedViewCollection(object):
+def add_view_collection(path, collection_class, instance_namespace=None, initkwargs=None):
+    frame = sys._getframe(1)
+    locals = frame.f_locals
+
+    # Try to make sure we were called from a class def. In 2.2.0 we can't
+    # check for __module__ since it doesn't seem to be added to the locals
+    # until later on.
+    if locals is frame.f_globals or '__module__' not in locals:
+        raise TypeError("url can be used only from a class url.")
+
+    if 'urls' not in locals:
+        locals['urls'] = list()
+
+    initkwargs = initkwargs if initkwargs else dict()
+    url = ViewCollectionInfo(path, collection_class, instance_namespace, initkwargs)
+    locals['urls'].append(url)
+
+
+class ViewCollection(object):
 
     application_namespace = None
 
     def __init__(self, instance_namespace=None):
-        self.urlpatterns = patterns()
         self.instance_namespace = instance_namespace
 
-    def add_view(self, path, view, name=None):
-        # duplicate the view so that it possible to reference
-        # the collection in the view without risks
-        new_view = duplicate(view, type(self).__name__)
-        new_view.collection = self
-        self.urlpatterns += patterns(url(path, view, name=name))
+    @classmethod
+    def include_urls(cls, instance_namespace=None, **kwargs):
+        return cls(instance_namespace, **kwargs)._include_urls()
 
-    def add_collection(self, path, collection):
-        self.urlpatterns += patterns(path, collection.include_urlpatterns())
+    def _include_urls(self):
+        urls = list()
+        for url in self.urls:
+            if isinstance(url, ViewInfo):
+                if type(url.view) == FunctionType:
+                    urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
+                else:
+                    urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
 
-    def include_urlpatterns(self):
-        return include((self.urlpatterns, self.application_namespace, self.instance_namespace))
+            else:
+                include_urls = url.collection_class.include_urls(url.instance_namespace, **url.initkwargs)
+                urls.append((url.path, include_urls))
+        return include(patterns('', *urls), self.application_namespace, self.instance_namespace)
