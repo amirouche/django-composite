@@ -148,6 +148,8 @@ def add_url(path, view, initkwargs=None, name=None):
 
     initkwargs = initkwargs if initkwargs else dict()
     view = ViewInfo(path, view, initkwargs, name)
+    if 'urls' not in locals:
+        locals['urls'] = list()
     locals['urls'].append(view)
 
 
@@ -164,11 +166,12 @@ def add_view_collection(path, collection_class, instance_namespace=None, initkwa
 
     initkwargs = initkwargs if initkwargs else dict()
     url = ViewCollectionInfo(path, collection_class, instance_namespace, initkwargs)
+    if 'urls' not in locals:
+        locals['urls'] = list()
     locals['urls'].append(url)
 
 
 class ViewCollection(object):
-    urls = list()
     application_namespace = None
 
     def __init__(self, instance_namespace=None):
