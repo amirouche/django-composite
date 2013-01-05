@@ -13,7 +13,7 @@ from django.template.response import TemplateResponse
 from utils import OrderedSet
 
 
-class AutoRenderTemplateResponse(TemplateResponse):
+class RenderableTemplateResponse(TemplateResponse):
     """Response that can be rendered in a template"""
 
     def __str__(self):
@@ -76,7 +76,7 @@ class Composite(TemplateView):
 
     __metaclass__ = MetaComposite
 
-    response_class = AutoRenderTemplateResponse
+    response_class = RenderableTemplateResponse
 
     css_files = []
     javascript_files = []
