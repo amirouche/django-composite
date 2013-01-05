@@ -1,6 +1,3 @@
-import sys
-
-from types import MethodType
 from types import FunctionType
 
 from collections import namedtuple
@@ -8,6 +5,8 @@ from collections import namedtuple
 from django.conf.urls import url as django_url
 from django.conf.urls import include
 from django.conf.urls import patterns
+from django.http import HttpResponseRedirect
+from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView
 from django.template.response import TemplateResponse
 
@@ -15,11 +14,11 @@ from utils import OrderedSet
 
 
 class AutoRenderTemplateResponse(TemplateResponse):
-    """Reponse that can be rendered in a template"""
+    """Response that can be rendered in a template"""
 
     def __str__(self):
         self.render()
-        return self.content
+        return mark_safe(self.rendered_content)
 
 
 class MetaComposite(type):
@@ -55,12 +54,21 @@ class MetaComposite(type):
                     has_post = True
 
             if has_post:
+                # if the composite has no post but a sub composite
+                # has the parent composite must dispatch the request
+                # to all sub composites so that the composite
+                # that has a post method can have chance to answer
+                # the sub composites that have not post method are
+                # handled in get_composites_responses
                 def post(self, request, *args, **kwargs):
                     context = self.get_context_data(**kwargs)
-                    context.update(self.get_composites_responses(request, *args, **kwargs))
+                    responses = self.get_composites_responses(request, *args, **kwargs)
+                    for response in responses['composites']:
+                        if isinstance(response, HttpResponseRedirect):
+                            return response
+                    context.update(responses)
                     return self.render_to_response(context)
-                cls.post = MethodType(post, None, cls)
-
+                cls.post = post
         return cls
 
 
@@ -76,7 +84,6 @@ class Composite(TemplateView):
     def __init__(self, parent=None, *args, **kwargs):
         super(Composite, self).__init__(**kwargs)
         self.parent = parent
-        self.get_composites()
 
     def __call__(self, request, *args, **kwargs):
         if hasattr(self, 'get') and not hasattr(self, 'head'):
@@ -126,7 +133,17 @@ class StackedComposite(Composite):
     def get_composites_responses(self, request, *args, **kwargs):
         responses = list()
         for composite in self.get_composites():
+            # process request
+            # if the request is POST and the composite has not post method
+            # it should be rendered as a GET so switch POST with GET
+            # when it happens
+            switched_method = False
+            if request.method == 'POST' and not hasattr(composite, 'post'):
+                request.method = 'GET'
+                switched_method = True
             response = composite(request, *args, **kwargs)
+            if switched_method:
+                request.method = 'POST'
             responses.append(response)
         context = dict(composites=responses)
         return context
@@ -135,54 +152,16 @@ class StackedComposite(Composite):
 ViewInfo = namedtuple('ViewInfo', ('path', 'view', 'initkwargs', 'name'))
 ViewCollectionInfo = namedtuple('ViewCollectionInfo', ('path', 'collection_class', 'instance_namespace', 'initkwargs'))
 
-# borrowed from zope.interface.declarations._interface
-def add_url(path, view, initkwargs=None, name=None):
-    # XXX: comment taken from zope.interface:
-    # This entire approach is invalid under Py3K.  Don't even try to fix
-    # the coverage for this block there. :(
-    frame = sys._getframe(1)
-    locals = frame.f_locals
-
-    # Try to make sure we were called from a class def. In 2.2.0 we can't
-    # check for __module__ since it doesn't seem to be added to the locals
-    # until later on.
-    if locals is frame.f_globals or '__module__' not in locals:
-        raise TypeError("url can be used only from a class url.")
-
-    initkwargs = initkwargs if initkwargs else dict()
-    view = ViewInfo(path, view, initkwargs, name)
-    if 'urls' not in locals:
-        locals['urls'] = list()
-    locals['urls'].append(view)
-
-
-def add_view_collection(path, collection_class, instance_namespace=None, initkwargs=None):
-    frame = sys._getframe(1)
-    locals = frame.f_locals
-
-    # Try to make sure we were called from a class def. In 2.2.0 we can't
-    # check for __module__ since it doesn't seem to be added to the locals
-    # until later on.
-    if locals is frame.f_globals or '__module__' not in locals:
-        raise TypeError("url can be used only from a class url.")
-
-
-    initkwargs = initkwargs if initkwargs else dict()
-    url = ViewCollectionInfo(path, collection_class, instance_namespace, initkwargs)
-    if 'urls' not in locals:
-        locals['urls'] = list()
-    locals['urls'].append(url)
-
 
 class ViewCollection(object):
+
     application_namespace = None
 
     def __init__(self, instance_namespace=None):
+        self.urls = list()
         self.instance_namespace = instance_namespace
-
-    @classmethod
-    def include_urls(cls, instance_namespace=None, **kwargs):
-        return cls(instance_namespace, **kwargs)._include_urls()
+        self.collections = list()
+        self.views = list()
 
     def add_view(self, path, view, initkwargs=None, name=None):
         initkwargs = initkwargs if initkwargs else dict()
@@ -203,10 +182,12 @@ class ViewCollection(object):
                 else:
                     view = url.view()
                     view.collection = self
+                    self.views.append(view)
                     urls.append(django_url(url.path, view, url.initkwargs, url.name))
             else:
                 collection = url.collection_class(url.instance_namespace, **url.initkwargs)
                 collection.collection = self
+                self.collections.append(collection)
                 include_urls = collection._include_urls()
                 urls.append((url.path, include_urls))
         return include(patterns('', *urls), self.application_namespace, self.instance_namespace)
