@@ -9,18 +9,10 @@ composite Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`sub` Module
------------------
-
-.. automodule:: composite.sub
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`tests` Module
+:mod:`mixin` Module
 -------------------
 
-.. automodule:: composite.tests
+.. automodule:: composite.mixin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -41,18 +33,10 @@ composite Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`widget` Module
---------------------
-
-.. automodule:: composite.widget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
 
-    composite.pages
+    composite.tests
 
