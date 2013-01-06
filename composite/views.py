@@ -11,9 +11,9 @@ Now, most of the time the composite tree is one level deep.
 Hence you will only need one inner composite which will be a called
 the root composite since it's the first in the hierarchy and it's the
 one you register against the url router. It can be a
-``StackedCompositeView`` or ``NamescapedCompositeView`` or
+``StackedCompositeView`` or ``NamespacedCompositeView`` or
 if you have forms in the page your are rendering
-``StackedCompositeViewWithPost`` or ``NamescapedCompositeViewWithPost``.
+``StackedCompositeViewWithPost`` or ``NamespacedCompositeViewWithPost``.
 The remaining composites will most likely be ``LeafCompositeView``
 or a generic class based view which also inherits the
 ``RenderableTemplateViewMixin``, except this little inheritance
@@ -36,7 +36,7 @@ The code involved in writring ``B1`` is more complex that ``B2`` and ``b``
 and you will be able to reuse ``b`` which is probably not the case of ``B1``.
 
 Also you might need to mix both ``StackedCompositeView*`` and
-``NamescapedCompositeView*``, the latter leading to similar code as the one
+``NamespacedCompositeView*``, the latter leading to similar code as the one
 you would get using *include template tags*.
 """
 from types import FunctionType
@@ -228,7 +228,7 @@ class CompositeHierarchyHasPostMixin(object):
     of the fact that a composite can receive a POST request in
     ``composites_responses`` and switch to a ``GET`` if the subcomposite
     has no ``post`` method. This is done for you in ``StackedCompositeView``
-    and ``NamescapedCompositeView``.
+    and ``NamespacedCompositeView``.
 
     This is most useful if you use class based generic views provided by
     Django if you are used to use your own classes you probably only need
@@ -454,13 +454,13 @@ class NamespacedCompositeView(AbstractCompositeView):
        A ``NamespacedCompositeView`` doesn't offer any particular machinery
        to work with forms.
        This class doesn't handle post request as a root node or an inner
-       node, see ``NamescapedCompositeViewWithPost`` if you want to use forms.
+       node, see ``NamespacedCompositeViewWithPost`` if you want to use forms.
     """
 
     composites = dict()
 
     def _composites(self, request, *args, **kwargs):
-        """Generator over instantiated sub composite classes"""
+        """Generator over instantiated sub composite classes and name"""
         for name, CompositeClass in self.composites.items():
             if isinstance(CompositeClass, (tuple, list)):
                 initkwargs = CompositeClass[1]
@@ -482,14 +482,42 @@ class NamespacedCompositeView(AbstractCompositeView):
         return responses
 
 
-class NamescapedCompositeViewWithPost(NamescapedCompositeView, CompositeHierarchyHasPostMixin):
+class NamespacedCompositeViewWithPost(NamespacedCompositeView, CompositeHierarchyHasPostMixin):
     """If there is at least one post method in your composite hierarchy you
     must use this class if you want to render namespaced composites.
 
     It's not the prefered method but you can also handle form this class
     refer to ``CompositeHierarchyHasPostMixin`` documentation.
     """
-    pass
+
+    def composites_responses(self, request, *args, **kwargs):
+        """Returns a dictionary with a ``composites`` key populated
+        with the answers of every composites.
+        """
+        responses = dict()
+        for name, composite in self._composites(request, *args, **kwargs):
+            # if the request is POST and the composite has no post method
+            # it should be rendered as a GET so switch POST with GET
+            # when it happens
+            # This assumes the developper correctly inherited every inner
+            # composite with ``CompositeHierarchyHasPostMixin`` or one
+            # of its subclass, if it not the case the following code
+            # will turn the request from GET to POST and will never hit
+            # the ``post`` method that should process the form.
+            # All this can bring some headaches...
+            # If you are this developper, cheers :)
+            switched_method = False
+            if request.method == 'POST' and not hasattr(composite, 'post'):
+                request.method = 'GET'
+                switched_method = True
+            response = composite(request, *args, **kwargs)
+            if (request.method == 'POST'
+                and isinstance(response, HttpResponseRedirect)):
+                return response
+            if switched_method:
+                request.method = 'POST'
+            responses[name] = response
+        return responses
 
 
 ViewInfo = namedtuple('ViewInfo', ('path', 'view', 'initkwargs', 'name'))

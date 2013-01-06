@@ -6,10 +6,12 @@ from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
 
 from ..views import RenderableTemplateResponseMixin
+from ..views import NamespacedCompositeViewWithPost
 from ..views import CompositeHierarchyHasPostMixin
 from ..views import StackedCompositeViewWithPost
 from ..views import RenderableTemplateViewMixin
 from ..views import RenderableTemplateResponse
+from ..views import NamespacedCompositeView
 from ..views import AbstractCompositeView
 from ..views import StackedCompositeView
 from ..views import LeafCompositeView
@@ -90,6 +92,7 @@ class AbstractCompositeViewTests(TestCase):
         request = HttpRequest()
         composite = AbstractCompositeView()
         self.assertRaises(NotImplementedError, composite.composites_responses, request)
+
     def test_get_redirects(self):
         class RedirectComposite(AbstractCompositeView):
 
@@ -266,7 +269,7 @@ class StackedCompositeViewTests(TestCase):
             self.assertEqual(str(response), 'foo &amp; barspam &amp; egg\n')
 
 
-class StackedCompositeViewWithPostTest(TestCase):
+class StackedCompositeViewWithPostTests(TestCase):
 
     def test_post_fully_rendered(self):
         """When the ``StackedCompositeViewWithPost`` is an inner composite
@@ -408,6 +411,226 @@ class StackedCompositeViewWithPostTest(TestCase):
             composites = (
                 (FixedResponseValue, dict(response='whatever')),
                 LeafCompositeRedirectOnPost,
+            )
+
+        request = HttpRequest()
+        request.method = 'POST'
+        view = TestComposite.as_view()
+        response = view(request)
+        with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            self.assertTrue(isinstance(response, HttpResponseRedirect))
+
+
+class NamespacedCompositeViewTests(TestCase):
+
+    def test__composites(self):
+        class SubCompositeOne(LeafCompositeView):
+            pass
+
+        class SubCompositeTwo(LeafCompositeView):
+            pass
+
+        class TestComposite(NamespacedCompositeView):
+            composites = dict(one=SubCompositeOne, two=SubCompositeTwo)
+
+        composites = dict(TestComposite()._composites(None)).keys()
+        self.assertEqual(len(composites), 2)
+
+    def test__composites_with_tuple_syntax(self):
+        class BaseSubComposite(LeafCompositeView):
+
+            args1 = None
+            args2 = None
+
+        class SubCompositeOne(BaseSubComposite):
+            pass
+
+        class SubCompositeTwo(BaseSubComposite):
+            pass
+
+        class TestComposite(NamespacedCompositeView):
+            composites = dict(
+                one=(SubCompositeOne, dict(args1='foo', args2='bar')),
+                two=(SubCompositeTwo, dict(args1='spam', args2='egg')),
+            )
+
+        composites = dict(TestComposite()._composites(None)).keys()
+        self.assertEqual(len(composites), 2)
+
+    def test_composites_class_with_both_syntax(self):
+        class SubCompositeOne(LeafCompositeView):
+            pass
+
+        class SubCompositeTwo(LeafCompositeView):
+
+            args1 = None
+            args2 = None
+
+        class TestComposite(NamespacedCompositeView):
+            composites = dict(
+                one=SubCompositeOne,
+                two=(SubCompositeTwo, dict(args1='spam', args2='egg')),
+            )
+        composites = dict(TestComposite()._composites(None)).keys()
+        self.assertEqual(len(composites), 2)
+
+    def test_get_composites_responses(self):
+        class FixedResponseValue(LeafCompositeView):
+
+            response = None
+
+            def render_to_response(self, context, **response_kwargs):
+                return self.response
+
+        class TestComposite(NamespacedCompositeView):
+            composites = dict(
+                one=(FixedResponseValue, dict(response='foo & bar')),
+                two=(FixedResponseValue, dict(response='spam & egg')),
+            )
+
+        composite = TestComposite()
+        request = HttpRequest()
+        request.method = 'GET'
+        responses = composite.composites_responses(request)
+        self.assertEqual(responses, dict(one='foo & bar', two='spam & egg'))
+
+    def test_composite_get(self):
+        class FixedResponseValue(LeafCompositeView):
+
+            response = None
+
+            def render_to_response(self, context, **response_kwargs):
+                return self.response
+
+        class TestComposite(NamespacedCompositeView):
+            template_name = 'namespaced_composite_test.html'
+
+            composites = dict(
+                one=(FixedResponseValue, dict(response='foo & bar')),
+                two=(FixedResponseValue, dict(response='spam & egg')),
+            )
+        request = HttpRequest()
+        request.method = 'GET'
+        view = TestComposite.as_view()
+        response = view(request)
+        with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            self.assertEqual(str(response), 'foo &amp; bar\nspam &amp; egg\n')
+
+
+class NamespacedCompositeViewWithPostTests(TestCase):
+
+    def test_post_fully_rendered(self):
+        """When the ``StackedCompositeViewWithPost`` is an inner composite
+           and that the POST is handled by a another branch of the
+           tree the request is still POST but should be answered
+           as if it was a GET"""
+
+        class FixedResponseValue(LeafCompositeView):
+
+            response = None
+
+            def render_to_response(self, context, **response_kwargs):
+                return self.response
+
+        class TestComposite(NamespacedCompositeViewWithPost):
+            template_name = 'namespaced_composite_test.html'
+
+            composites = dict(
+                one=(FixedResponseValue, dict(response='foo & bar')),
+                two=(FixedResponseValue, dict(response='spam & egg')),
+            )
+        request = HttpRequest()
+        request.method = 'POST'
+        view = TestComposite.as_view()
+        response = view(request)
+        with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            self.assertEqual(str(response), 'foo &amp; bar\nspam &amp; egg\n')
+
+    def test_post_with_several_subcomposite(self):
+        """Same test as above except there is several subcomposite
+        each subcomposite returns a response, which are rendered
+        in the response"""
+
+        class LeafCompositeWithPost(LeafCompositeView):
+
+            template_name = 'hello.html'
+
+            def post(self, request, *args, **kwargs):
+                return 'response from post'
+
+        class FixedResponseValue(LeafCompositeView):
+
+            response = None
+
+            def render_to_response(self, context, **response_kwargs):
+                return self.response
+
+        class TestComposite(NamespacedCompositeViewWithPost):
+            template_name = 'namespaced_composite_test.html'
+
+            composites = dict(
+                one=LeafCompositeWithPost,
+                two=(FixedResponseValue, dict(response='another subcomposite')),
+            )
+
+        request = HttpRequest()
+        request.method = 'POST'
+        view = TestComposite.as_view()
+        response = view(request)
+        with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            expected = 'response_from_post\nanother subcomposite\n\n'
+            self.assertTrue(str(response), expected)
+
+    def test_post_request_redirect(self):
+        """If a POST request is submitted subcomposite can return a redirect
+        if it is the case the response must be forwared"""
+
+        class LeafCompositeRedirectOnPost(LeafCompositeView):
+
+            template_name = 'hello.html'
+
+            def post(self, request, *args, **kwargs):
+                return HttpResponseRedirect('index')
+
+        class TestComposite(NamespacedCompositeViewWithPost):
+            template_name = 'stacked_composite.html'
+
+            composites = dict(one=LeafCompositeRedirectOnPost)
+
+        request = HttpRequest()
+        request.method = 'POST'
+        view = TestComposite.as_view()
+        response = view(request)
+        with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            self.assertTrue(isinstance(response, HttpResponseRedirect))
+
+    def test_post_request_redirect_wiht_several_subcomposites(self):
+        """If a POST request is submitted subcomposite can return a redirect
+        if it is the case the response must be forwared even if other sub
+        composites were rendered"""
+
+        class FixedResponseValue(LeafCompositeView):
+
+            template_name = 'hello.html'
+
+            response = None
+
+            def render_to_response(self, context, **response_kwargs):
+                return self.response
+
+        class LeafCompositeRedirectOnPost(LeafCompositeView):
+
+            template_name = 'hello.html'
+
+            def post(self, request, *args, **kwargs):
+                return HttpResponseRedirect('index')
+
+        class TestComposite(NamespacedCompositeViewWithPost):
+            template_name = 'stacked_composite.html'
+
+            composites = dict(
+                one=(FixedResponseValue, dict(response='whatever')),
+                two=LeafCompositeRedirectOnPost,
             )
 
         request = HttpRequest()
