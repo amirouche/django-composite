@@ -1,2 +1,2 @@
 from .views import *
-from collection import *
+from .urls import *
