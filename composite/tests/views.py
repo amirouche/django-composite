@@ -113,8 +113,9 @@ class AbstractCompositeViewTests(TestCase):
             string = None
 
             def get_context_data(self, **kwargs):
-                kwargs['string'] = self.string
-                return super(StringLeafCompositeView, self).get_context_data(**kwargs)
+                context = super(StringLeafCompositeView, self).get_context_data(**kwargs)
+                context['string'] = self.string
+                return context
 
         class SimpleComposite(AbstractCompositeView):
 
@@ -148,8 +149,9 @@ class CompositeHierarchyHasPostMixinTests(TestCase):
             string = None
 
             def get_context_data(self, **kwargs):
-                kwargs['string'] = self.string
-                return super(StringLeafCompositeView, self).get_context_data(**kwargs)
+                context =  super(StringLeafCompositeView, self).get_context_data(**kwargs)
+                context['string'] = self.string
+                return context
 
         class SimpleComposite(AbstractCompositeView, CompositeHierarchyHasPostMixin):
 
@@ -168,8 +170,8 @@ class CompositeHierarchyHasPostMixinTests(TestCase):
         view = SimpleComposite.as_view()
         request = HttpRequest()
         request.method = 'POST'
-        response = view(request)
         with self.settings(TEMPLATE_DIRS=(TEST_TEMPLATE_DIR,)):
+            response = view(request)
             self.assertEqual(str(response), 'hello\nworld\n\n')
 
 
