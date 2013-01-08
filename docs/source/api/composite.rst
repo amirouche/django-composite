@@ -17,18 +17,18 @@ composite Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`utils` Module
--------------------
+:mod:`urls` Module
+------------------
 
-.. automodule:: composite.utils
+.. automodule:: composite.urls
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`views` Module
+:mod:`utils` Module
 -------------------
 
-.. automodule:: composite.views
+.. automodule:: composite.utils
     :members:
     :undoc-members:
     :show-inheritance:
@@ -39,4 +39,5 @@ Subpackages
 .. toctree::
 
     composite.tests
+    composite.views
 

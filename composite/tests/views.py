@@ -5,16 +5,16 @@ from django.http import HttpRequest
 from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
 
-from ..views import RenderableTemplateResponseMixin
-from ..views import NamespacedCompositeViewWithPost
-from ..views import CompositeHierarchyHasPostMixin
-from ..views import StackedCompositeViewWithPost
-from ..views import RenderableTemplateViewMixin
-from ..views import RenderableTemplateResponse
-from ..views import NamespacedCompositeView
-from ..views import AbstractCompositeView
-from ..views import StackedCompositeView
-from ..views import LeafCompositeView
+from ..views.base import RenderableTemplateResponseMixin
+from ..views.base import NamespacedCompositeViewWithPost
+from ..views.base import CompositeHierarchyHasPostMixin
+from ..views.base import StackedCompositeViewWithPost
+from ..views.base import RenderableTemplateViewMixin
+from ..views.base import RenderableTemplateResponse
+from ..views.base import NamespacedCompositeView
+from ..views.base import AbstractCompositeView
+from ..views.base import StackedCompositeView
+from ..views.base import LeafCompositeView
 
 
 TEST_TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')

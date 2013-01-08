@@ -9,10 +9,10 @@ tests Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`collection` Module
-------------------------
+:mod:`urls` Module
+------------------
 
-.. automodule:: composite.tests.collection
+.. automodule:: composite.tests.urls
     :members:
     :undoc-members:
     :show-inheritance:
