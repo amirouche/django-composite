@@ -45,6 +45,7 @@ from collections import namedtuple
 
 from django.conf.urls import url as django_url
 from django.conf.urls import include
+from django.utils.encoding import force_text
 from django.conf.urls import patterns
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
@@ -59,7 +60,7 @@ class RenderableTemplateResponseMixin(object):
 
     def __str__(self):
         self.render()
-        return mark_safe(self.rendered_content)
+        return self.rendered_content
 
 
 class RenderableTemplateResponse(RenderableTemplateResponseMixin, TemplateResponse):
