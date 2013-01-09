@@ -1,0 +1,19 @@
+{% extends "composite/sortable_table.html" %}
+
+
+{% block header %}
+    <form method="POST">{% csrf_token %}
+        <div> <!-- useless div for grouping formset's hidden fields -->
+            {{ formset.management_form }}
+            {% for form in formset.forms %}
+                {% for field  in form.hidden_fields %}
+                    {{ field }}
+                {% endfor %}
+            {% endfor %}
+        </div>
+{% endblock %}
+
+{% block footer %}
+    <input type="submit" value="Save" name="_save" class="btn pull-right" />
+    </form>
+{% endblock %}
