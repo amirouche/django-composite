@@ -17,7 +17,7 @@ class UrlCollection(object):
         self.instance_namespace = instance_namespace
         self._application_namespace = application_namespace if application_namespace else self.application_namespace
 
-    def add_view(self, path, view, initkwargs=None, name=None):
+    def add_url(self, path, view, initkwargs=None, name=None):
         initkwargs = initkwargs if initkwargs else dict()
         url = UrlInfo(path, view, initkwargs, name)
         self.urls.append(url)
@@ -37,6 +37,6 @@ class UrlCollection(object):
                     urls.append(django_url(url.path, url.view, url.initkwargs, url.name))
             else:
                 collection = url.collection_class(instance_namespace=url.instance_namespace, **url.initkwargs)
-                include_urls = collection._include_urls()
+                include_urls = collection.include_urls()
                 urls.append((url.path, include_urls))
         return include(patterns('', *urls), self._application_namespace, self.instance_namespace)
