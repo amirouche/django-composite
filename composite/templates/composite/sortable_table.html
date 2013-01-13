@@ -24,7 +24,7 @@
         </thead>
         <tbody>
             {% for object in objects %}
-                <tr class="{% cycle 'row1' 'row2' %}">{% for field in object %}<td>{{ field }}</td>{% endfor %}</tr>
+                <tr class="{% cycle 'row1' 'row2' %}">{% for field in object %}<td>{{ field|safe }}</td>{% endfor %}</tr>
             {% endfor %}
         </tbody>
     </table>
