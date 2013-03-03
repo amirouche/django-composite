@@ -39,16 +39,8 @@ Also you might need to mix both ``StackedCompositeView*`` and
 ``NamespacedCompositeView*``, the latter leading to similar code as the one
 you would get using *include template tags*.
 """
-from types import FunctionType
-
-from collections import namedtuple
-
-from django.conf.urls import url as django_url
-from django.conf.urls import include
-from django.utils.encoding import force_text
-from django.conf.urls import patterns
 from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
+
 from django.views.generic import TemplateView
 from django.template.response import TemplateResponse
 
@@ -58,7 +50,7 @@ class RenderableTemplateResponseMixin(object):
     renderable in a template.
     """
 
-    def __str__(self):
+    def __unicode__(self):
         self.render()
         return self.rendered_content
 
@@ -169,6 +161,9 @@ class LeafCompositeView(RenderableTemplateViewMixin, TemplateView):
         # so we do ``as_view.view`` work here
         if hasattr(self, 'get') and not hasattr(self, 'head'):
             self.head = self.get
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
         return self.dispatch(request, *args, **kwargs)
 
     def root(self):
